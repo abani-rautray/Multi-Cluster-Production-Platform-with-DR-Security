@@ -1,0 +1,22 @@
+apiVersion: karpenter.k8s.aws/v1beta1
+kind: EC2NodeClass
+metadata:
+  name: default
+spec:
+  amiFamily: AL2
+
+  # MUST match the IAM role created by Terraform for DR
+  role: prod-dr-karpenter-node-role
+
+  subnetSelectorTerms:
+    - tags:
+        karpenter.sh/discovery: prod-dr
+
+  securityGroupSelectorTerms:
+    - tags:
+        karpenter.sh/discovery: prod-dr
+
+  tags:
+    Name: prod-dr-karpenter
+    Environment: dr
+    ManagedBy: karpenter

@@ -1,0 +1,7 @@
+apiVersion: velero.io/v1
+kind: Restore
+metadata:
+  name: app-prod-restore
+  namespace: velero
+spec:
+  backupName: app-prod-backup
