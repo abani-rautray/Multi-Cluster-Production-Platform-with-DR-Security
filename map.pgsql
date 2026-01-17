@@ -24,11 +24,15 @@ multi-cluster-platform/
 │
 ├── gitops/
 │   ├── argocd/
-│   │   ├── install.yaml
+│   │   ├── kustomization.yaml
+        |--- namespace.yaml
 │   │   └── app-of-apps.yaml
 │   │
 │   └── applications/
 │       ├── sample-app.yaml
+|       |-- prometheus.yaml
+|       |-- grafana.yaml
+|       |-- alerts.yaml
 │       └── namespaces.yaml
 │
 ├── clusters/

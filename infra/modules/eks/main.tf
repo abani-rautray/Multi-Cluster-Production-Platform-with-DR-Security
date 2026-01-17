@@ -10,8 +10,13 @@ module "eks" {
 
   enable_irsa = true
 
+  cluster_tags = {
+  "karpenter.sh/discovery" = var.cluster_name
+}
+
+
   eks_managed_node_groups = {
-    default = {
+    bootstrap = {
       instance_types = ["t3.medium"]
       min_size       = 1
       max_size       = 2

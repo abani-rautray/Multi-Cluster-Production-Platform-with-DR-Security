@@ -1,19 +1,19 @@
 apiVersion: argoproj.io/v1alpha1
 kind: Application
 metadata:
-  name: platform-apps
+  name: grafana
   namespace: argocd
 spec:
   project: default
 
   source:
-    repoURL: https://github.com/abani-rautray/Multi-Cluster-Production-Platform-with-DR-Security.git
+    repoURL: https://github.com/YOUR_GITHUB_USERNAME/multi-cluster-platform.git
     targetRevision: main
-    path: gitops/applications
+    path: observability/grafana
 
   destination:
     server: https://kubernetes.default.svc
-    namespace: argocd
+    namespace: observability
 
   syncPolicy:
     automated:

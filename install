@@ -1,0 +1,150 @@
+FINAL EXECUTION ORDER (VERY IMPORTANT)
+🔹 PHASE 1 — Terraform (Infrastructure)
+1️⃣ Create Primary cluster
+cd infra/eks-primary
+terraform init
+terraform validate
+terraform plan
+terraform apply
+
+
+✅ Verify:
+
+aws eks list-clusters
+aws eks update-kubeconfig --name prod-primary --region ap-south-1
+kubectl get nodes
+
+
+You must see:
+
+EKS cluster
+
+Managed node group nodes
+
+2️⃣ Create DR cluster
+cd ../eks-dr
+terraform init
+terraform validate
+terraform plan
+terraform apply
+
+
+✅ Verify:
+
+aws eks update-kubeconfig --name prod-dr --region ap-south-1
+kubectl get nodes
+
+🔹 PHASE 2 — ArgoCD Bootstrap (ONE TIME ONLY)
+3️⃣ Switch to Primary cluster
+kubectl config use-context prod-primary
+
+4️⃣ Install ArgoCD
+kubectl apply -k gitops/argocd/
+
+
+Your gitops/argocd/ is correct because you have:
+
+namespace.yaml
+
+kustomization.yaml
+
+✅ Verify:
+
+kubectl get pods -n argocd
+
+
+All pods must be Running.
+
+🔹 PHASE 3 — GitOps Control Plane
+5️⃣ Apply App-of-Apps
+kubectl apply -f gitops/argocd/app-of-apps.yaml
+
+
+✅ Verify:
+
+kubectl get applications -n argocd
+
+
+You should see:
+
+platform-apps
+
+sample-app
+
+Status should move to Synced / Healthy
+
+🔹 PHASE 4 — Cluster Manifests (Apps + Karpenter)
+6️⃣ Primary cluster apps
+
+ArgoCD will automatically apply:
+
+clusters/prod-primary/
+├── namespaces.yaml
+├── apps.yaml
+└── karpenter/
+
+
+✅ Verify:
+
+kubectl get pods -n app-prod
+kubectl get nodepool
+kubectl get ec2nodeclass
+
+7️⃣ Karpenter validation
+
+Deploy workload → nodes should scale.
+
+kubectl scale deployment nginx -n app-prod --replicas=5
+kubectl get nodes
+
+
+You should see new nodes created by Karpenter.
+
+🔹 PHASE 5 — Observability
+8️⃣ Apply observability via GitOps
+
+Ensure these are referenced in ArgoCD apps:
+
+observability/prometheus
+observability/grafana
+observability/alerts
+
+
+✅ Verify:
+
+kubectl get pods -n observability
+
+
+Grafana test:
+
+kubectl port-forward svc/grafana 3000:80 -n observability
+
+🔹 PHASE 6 — Disaster Recovery (Velero)
+9️⃣ Install Velero (Primary)
+kubectl apply -f dr/velero/install.yaml
+
+🔟 Take backup
+kubectl apply -f dr/velero/backup.yaml
+kubectl get backup -n velero
+
+1️⃣1️⃣ Restore in DR cluster
+kubectl config use-context prod-dr
+kubectl apply -f dr/velero/install.yaml
+kubectl apply -f dr/velero/restore.yaml
+
+
+✅ Verify:
+
+kubectl get pods -n app-prod
+
+🟢 FINAL VALIDATION CHECKLIST (Tick These)
+
+✅ Two EKS clusters
+✅ Separate Terraform states
+✅ ArgoCD running
+✅ GitOps syncing
+✅ Karpenter creating nodes
+✅ Prometheus & Grafana running
+✅ Velero backup & restore works
+
+If all are ✅ — YOU ARE DONE
